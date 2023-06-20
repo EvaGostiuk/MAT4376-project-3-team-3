@@ -2,4 +2,4 @@
 
 [Data Dictionary](https://docs.google.com/document/d/1nWnt36HMugwqQy0EldePrQP03F-1iyVns8kNMVfgggE/edit?usp=sharing)
 
-\(\infty\)
+$$\infty$$
