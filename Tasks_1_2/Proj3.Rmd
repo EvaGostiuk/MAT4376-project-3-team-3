@@ -1,0 +1,730 @@
+---
+title: "Proj3"
+output: html_document
+date: "2023-06-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(lubridate)
+library(corrplot)
+library(plotly)
+library(scatterplot3d)
+library(ggplot2)
+library(dplyr)
+library(queueing)
+library(stringr)
+```
+
+
+
+```{r}
+dataset <- read.csv("years20262030.csv")
+dataset$Departure_Date <- ymd(dataset$Departure_Date)
+dataset$Departure_Time <- hms(dataset$Departure_Time)
+dataset$Day <- day(dataset$Departure_Date)
+dataset$Hour <- hour(dataset$Departure_Time)
+dataset$Minute <- minute(dataset$Departure_Time)
+
+dataset$Pass_ID <- replace(dataset$Pass_ID, is.na(dataset$Pass_ID) | dataset$Pass_ID == "", "Unknown")
+
+
+dataset$order <- replace(dataset$order, is.na(dataset$order) | dataset$order == "", "Unknown")
+
+
+dataset$Wait_Time <- replace(dataset$Wait_Time, is.na(dataset$Wait_Time) | dataset$Wait_Time == "", "N/A")
+
+
+dataset$C_Start <- replace(dataset$C_Start, is.na(dataset$C_Start) | dataset$C_Start == "", "N/A")
+
+dataset$C0 <- replace(dataset$C0, is.na(dataset$C0) | dataset$C0 == "", "N/A")
+
+dataset$C_avg <- replace(dataset$C_avg, is.na(dataset$C_avg) | dataset$C_avg == "", "N/A")
+```
+
+```{r}
+d1 <- read.csv("years20262030.csv")
+d2 <- read.csv("BASA_AUC_2028_912.csv")
+d3 <- read.csv("dat_P_sub_c.csv")
+d4 <- read.csv("dat_F_sub.csv")
+```
+
+```{r}
+dataset <- read.csv("all_data_merged.csv")
+
+dataset <- dataset %>%
+  mutate(Act_Departure = as.POSIXct(Act_Departure, origin = "1970-01-01"))
+
+dataset <- dataset %>%
+  mutate(Act_Departure_Date = as_date(Act_Departure),
+         Act_Departure_Time = format(Act_Departure, format = "%H:%M:%S"))
+
+dataset$Day <- day(dataset$Act_Departure)
+dataset$Hour <- hour(dataset$Act_Departure)
+dataset$Minute <- minute(dataset$Act_Departure)
+
+
+dataset$S2 <- as.POSIXct(dataset$S2)
+
+dataset$Wait_Time <- as.numeric(dataset$Wait_Time)
+
+dataset$S1 <- dataset$S2 - (dataset$Wait_Time * 60) 
+
+dataset_SAF <- subset(dataset, Airfield == "SAF")
+dataset_SAF$S2 <- as.POSIXct(dataset_SAF$S2, format = "%Y-%m-%d %H:%M:%S")
+
+dataset_AUC <- subset(dataset, Airfield == "AUC")
+dataset_AUC$S2 <- as.POSIXct(dataset_AUC$S2, format = "%Y-%m-%d %H:%M:%S")
+```
+
+```{r}
+dataset$Hour <- lubridate::hour(dataset$S1)
+# Aggregate C_Start by hour and Airfield
+hourly_sum <- aggregate(C_Start ~ Hour + Airfield, data = dataset, FUN = sum)
+
+ggplot(hourly_sum, aes(x = Hour, y = C_Start)) +
+  geom_col(fill = "#fdfe89") +
+  geom_text(aes(label = C_Start), vjust = -0.5) +
+  labs(x = "Hour", y = "Sum of C_Start") +
+  scale_x_continuous(breaks = 0:23, limits = c(0, 23)) +
+  facet_wrap(~ Airfield, nrow = 1) +
+  ggtitle("Sum of C_Start by Hour using S1 Timestamp (SAF vs AUC)")
+```
+```{r}
+dataset$Hour <- lubridate::hour(dataset$S2)
+
+
+hourly_sum <- aggregate(C0 ~ Hour + Airfield, data = dataset, FUN = sum)
+
+ggplot(hourly_sum, aes(x = Hour, y = C0)) +
+  geom_col(fill = "#f3a787") +
+  geom_text(aes(label = C0), vjust = -0.8, size = 3) +
+  labs(x = "Hour", y = "Sum of C0") +
+  scale_x_continuous(breaks = 0:23, limits = c(0, 23)) +
+  facet_wrap(~ Airfield, nrow = 1) +
+  ggtitle("Sum of C0 by Hour using S2 Timestamp (SAF vs AUC)")
+```
+
+```{r}
+dataset_AUC <- subset(dataset, Airfield == "AUC")
+dataset_SAF <- subset(dataset, Airfield == "SAF")
+
+plot_AUC <- ggplot(dataset_AUC, aes(x = Wait_Time, y = C_avg)) +
+  geom_point() +
+  labs(x = "Wait Time (minutes)", y = "C_avg") +
+  ggtitle("Average C vs Wait Time - AUC") + scale_x_continuous(breaks = seq(0, 75, by = 5))
+
+plot_SAF <- ggplot(dataset_SAF, aes(x = Wait_Time, y = C_avg)) +
+  geom_point() +
+  labs(x = "Wait Time (minutes)", y = "C_avg") +
+  ggtitle("Average C vs Wait Time - SAF") + scale_x_continuous(breaks = seq(0, 60, by = 1))
+
+plot_AUC 
+plot_SAF
+
+```
+
+```{r}
+dataset_CWL <- dataset %>%
+  filter(Airfield == "CWL") %>%
+  mutate(BFO_Dest_City = na.omit(BFO_Dest_City)) %>%
+  filter(str_detect(BFO_Dest_City, "^[[:alnum:]]+$"))
+
+dataset_SAF <- dataset %>%
+  filter(Airfield == "SAF") %>%
+  mutate(BFO_Dest_City = na.omit(BFO_Dest_City)) %>%
+  filter(str_detect(BFO_Dest_City, "^[[:alnum:]]+$"))
+
+dataset_AUC <- dataset %>%
+  filter(Airfield == "AUC") %>%
+  mutate(BFO_Dest_City = na.omit(BFO_Dest_City)) %>%
+  filter(str_detect(BFO_Dest_City, "^[[:alnum:]]+$"))
+
+dataset_QUE <- dataset %>%
+  filter(Airfield == "QUE") %>%
+  mutate(BFO_Dest_City = na.omit(BFO_Dest_City)) %>%
+  filter(str_detect(BFO_Dest_City, "^[[:alnum:]]+$"))
+
+fill_colors <- c("#ab58a8", "#f3a787", "#fdfe89", "#4ab9a3")
+
+plots <- list(
+  CWL = ggplot(dataset_CWL, aes(x = BFO_Dest_City)) +
+    geom_bar(fill = fill_colors[1]) +
+    labs(x = "Destination City", y = "Frequency") +
+    ggtitle("BFO_Dest_City Distribution - CWL") +
+    theme(legend.position = "none") +
+    coord_flip() +
+    geom_text(stat = "count", aes(label = ..count..), vjust = -0.5),
+  
+  SAF = ggplot(dataset_SAF, aes(x = BFO_Dest_City)) +
+    geom_bar(fill = fill_colors[2]) +
+    labs(x = "Destination City", y = "Frequency") +
+    ggtitle("BFO_Dest_City Distribution - SAF") +
+    theme(legend.position = "none") +
+    coord_flip() +
+    geom_text(stat = "count", aes(label = ..count..), vjust = -0.5),
+  
+  AUC = ggplot(dataset_AUC, aes(x = BFO_Dest_City)) +
+    geom_bar(fill = fill_colors[3]) +
+    labs(x = "Destination City", y = "Frequency") +
+    ggtitle("BFO_Dest_City Distribution - AUC") +
+    theme(legend.position = "none") +
+    coord_flip() +
+    geom_text(stat = "count", aes(label = ..count..), vjust = -0.5),
+  
+  QUE = ggplot(dataset_QUE, aes(x = BFO_Dest_City)) +
+    geom_bar(fill = fill_colors[4]) +
+    labs(x = "Destination City", y = "Frequency") +
+    ggtitle("BFO_Dest_City Distribution - QUE") +
+    theme(legend.position = "none") +
+    coord_flip() +
+    geom_text(stat = "count", aes(label = ..count..), vjust = -0.5)
+)
+
+plots$CWL
+plots$SAF
+plots$AUC
+plots$QUE
+```
+
+```{r}
+filtered_data <- dataset[dataset$Airfield %in% c("SAF", "AUC", "QUE", "CWL") & dataset$Year %in% c(2026:2028), ]
+
+
+filtered_data$Act_Departure <- as.POSIXct(filtered_data$Act_Departure, format = "%Y-%m-%d %I:%M:%S %p", na.rm = TRUE)
+filtered_data$Sch_Departure <- as.POSIXct(filtered_data$Sch_Departure, format = "%Y-%m-%d %I:%M:%S %p", na.rm = TRUE)
+
+filtered_data$Delay <- as.numeric(difftime(filtered_data$Act_Departure, filtered_data$Sch_Departure, units = "hours"))
+filtered_data$Delay <- ifelse(filtered_data$Delay > 0, filtered_data$Delay, NA)
+
+plot_data <- filtered_data %>%
+  mutate(Year = as.Date(Act_Departure) %>% lubridate::year(),
+         Date = as.Date(Act_Departure) %>% format("%Y-%m-%d")) %>%
+  filter(!is.na(Delay)) %>%
+  select(Airfield, Year, Date, Delay)
+
+plot_airfields <- plot_data %>%
+  ggplot(aes(x = Date, y = Delay)) +
+  geom_line() +
+  labs(x = "Date", y = "Delay (hours)",
+       title = "Departure Delay Comparison") +
+  facet_grid(Airfield ~ Year, scales = "free") +
+  theme(legend.position = "none")
+
+plot_airfields
+```
+
+```{r}
+dataset_AUC <- subset(dataset, Airfield == "AUC")
+dataset_SAF <- subset(dataset, Airfield == "SAF")
+
+plot_AUC <- ggplot(dataset_AUC, aes(x = Wait_Time)) +
+  geom_histogram(fill = "#5dc190", color = "black", bins = 30) +
+  labs(x = "Wait Time", y = "Frequency") +
+  ggtitle("Wait Time Distribution - AUC") +
+  stat_bin(geom = "text", aes(label = stat(count)), vjust = -0.5, color = "black", size = 3) +
+  scale_x_continuous(breaks = seq(0, 75, by = 5))
+
+plot_SAF <- ggplot(dataset_SAF, aes(x = Wait_Time)) +
+  geom_histogram(fill = "#ab58a8", color = "black", bins = 30) +
+  labs(x = "Wait Time", y = "Frequency") +
+  ggtitle("Wait Time Distribution - SAF") +
+  stat_bin(geom = "text", aes(label = stat(count)), vjust = -0.5, color = "black", size = 3) +
+  scale_x_continuous(breaks = seq(0, 60, by = 1))
+
+plot_AUC
+plot_SAF
+```
+
+```{r}
+avg_wait_time_wait <- dataset %>%
+  group_by(Airfield) %>%
+  summarize(avg_wait = mean(Wait_Time, na.rm = TRUE))
+
+
+avg_wait_time_mean <- dataset %>%
+  group_by(Airfield) %>%
+  summarize(avg_wait = mean(mean, na.rm = TRUE))
+
+
+avg_wait_time <- merge(avg_wait_time_wait, avg_wait_time_mean, by = "Airfield", all = TRUE)
+
+
+avg_wait_time$updated_wait_time <- ifelse(is.na(avg_wait_time$avg_wait.x), avg_wait_time$avg_wait.y, avg_wait_time$avg_wait.x)
+
+p1 <- ggplot(avg_wait_time, aes(x = Airfield, y = updated_wait_time)) +
+  geom_col(fill = "#5fa1e7") +
+  geom_text(aes(label = sprintf("%.1f", updated_wait_time), y = updated_wait_time), vjust = -0.5, color = "black") +
+  labs(x = "Airfield", y = "Average Wait Time", title = "Average Wait Time by Airfield") +
+  theme_bw()
+
+avg_wait_time_filtered <- avg_wait_time[!is.na(avg_wait_time$updated_wait_time), ]
+
+p2 <- ggplot(avg_wait_time_filtered, aes(x = Airfield, y = updated_wait_time)) +
+  geom_col(fill = "#4ab9a3") +
+  geom_text(aes(label = sprintf("%.1f", updated_wait_time), y = updated_wait_time), vjust = -0.5, color = "black") +
+  labs(x = "Airfield", y = "Average Wait Time", title = "Average Wait Time for Airfields with Data") +
+  theme_bw()
+
+print(p1)
+print(p2)
+```
+
+```{r}
+df2$BFO_Destination_Country_Code <- ifelse(df2$BFO_Destination_Country_Code %in% c("", NA), "Unknown", df2$BFO_Destination_Country_Code)
+
+df_AUC <- df2[df2$Airfield == "AUC", ]
+
+counts_AUC <- df_AUC %>%
+  count(BFO_Destination_Country_Code)
+
+ggplot(counts_AUC, aes(x = BFO_Destination_Country_Code, y = n)) +
+  geom_bar(stat = "identity", fill = "#5fa1e7") +
+  labs(x = "BFO Destination Country Code", y = "Frequency", title = "BFO Destination Country Code - AUC") +
+  geom_text(aes(label = n), vjust = -0.5, color = "black", size = 3) +
+  theme_bw()
+
+df_SAF <- df2[df2$Airfield == "SAF", ]
+
+counts_SAF <- df_SAF %>%
+  count(BFO_Destination_Country_Code)
+
+ggplot(counts_SAF, aes(x = BFO_Destination_Country_Code, y = n)) +
+  geom_bar(stat = "identity", fill = "#5fa1e7") +
+  labs(x = "BFO Destination Country Code", y = "Frequency", title = "BFO Destination Country Code - SAF") +
+  geom_text(aes(label = n), vjust = -0.5, color = "black", size = 3) +
+  theme_bw()
+```
+
+```{r}
+plot_auc <- dataset %>%
+  filter(Airfield == "AUC") %>%
+  mutate(BFO_Destination_Country_Code = ifelse(BFO_Destination_Country_Code == "" | !grepl("^[A-Za-z]{3}$", BFO_Destination_Country_Code), "Unknown", BFO_Destination_Country_Code)) %>%
+  count(BFO_Destination_Country_Code) %>%
+  ggplot(aes(x = BFO_Destination_Country_Code, y = n, fill = BFO_Destination_Country_Code)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Destination Country Code", y = "Frequency", title = "BF0 Destination Country Code - AUC") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  geom_text(aes(label = n), vjust = -0.5, color = "black", size = 3) +
+  scale_fill_manual(values = c('#5fa1e7', '#5dc190','#ab58a8','#f3a787','#fdfe89','#4ab9a3')) +
+  coord_flip()
+
+plot_saf <- dataset %>%
+  filter(Airfield == "SAF") %>%
+  mutate(BFO_Destination_Country_Code = ifelse(BFO_Destination_Country_Code == "" | !grepl("^[A-Za-z]{3}$", BFO_Destination_Country_Code), "Unknown", BFO_Destination_Country_Code)) %>%
+  count(BFO_Destination_Country_Code) %>%
+  ggplot(aes(x = BFO_Destination_Country_Code, y = n, fill = BFO_Destination_Country_Code)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Destination Country Code", y = "Frequency", title = "BF0 Destination Country Code - SAF") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  geom_text(aes(label = n), vjust = -0.5, color = "black", size = 3) +
+  scale_fill_manual(values = c('#5fa1e7', '#5dc190','#ab58a8','#f3a787','#fdfe89','#4ab9a3')) +
+  coord_flip()
+
+plot_auc
+plot_saf
+```
+
+
+```{r}
+filtered_data <- dataset %>% filter(Airfield %in% c("AUC", "SAF"))
+
+summary_data <- filtered_data %>%
+  group_by(Day_of_Week, Airfield) %>%
+  summarise(
+    Total_C0 = sum(C0, na.rm = TRUE),
+    Total_C_Start = sum(C_Start, na.rm = TRUE),
+    Total_C_Avg = sum(C_avg, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+
+summary_data$Day_of_Week <- factor(summary_data$Day_of_Week, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+
+plot_c0 <- ggplot(summary_data, aes(x = Day_of_Week, y = Total_C0, fill = Airfield)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Day of Week", y = "Total C0", fill = "Airfield") +
+  geom_text(aes(label = Total_C0), vjust = -0.5, color = "black", size = 3, position = position_dodge(width = 0.9)) +
+  theme_bw()
+
+plot_c_start <- ggplot(summary_data, aes(x = Day_of_Week, y = Total_C_Start, fill = Airfield)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Day of Week", y = "Total C_Start", fill = "Airfield") +
+  geom_text(aes(label = Total_C_Start), vjust = -0.5, color = "black", size = 3, position = position_dodge(width = 0.9)) +
+  theme_bw()
+
+#C_Avg
+plot_c_avg <- ggplot(summary_data, aes(x = Day_of_Week, y = Total_C_Avg, fill = Airfield)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Day of Week", y = "Total C_Avg", fill = "Airfield") +
+  geom_text(aes(label = Total_C_Avg), vjust = -0.5, color = "black", size = 3, position = position_dodge(width = 0.9)) +
+  theme_bw()
+
+print(plot_c0)
+print(plot_c_start)
+print(plot_c_avg)
+```
+
+```{r}
+dataset$S2 <- ymd_hms(dataset$S2)
+
+dataset$HourS2 <- hour(dataset$S2)
+
+filtered_data <- dataset %>%
+  filter(Airfield %in% c("AUC", "SAF"))
+
+hourly_counts <- filtered_data %>%
+  group_by(Airfield, HourS2) %>%
+  summarise(Frequency = n(),
+            max_value = max(Frequency))
+
+plot_auc <- ggplot(hourly_counts[hourly_counts$Airfield == "AUC", ], aes(x = HourS2, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "#ab58a8") +
+  geom_text(aes(label = max_value), vjust = -0.5, color = "black", size = 3) +
+  labs(x = "Hour", y = "Frequency", title = "Frequency of S2 per Hour (Airfield AUC)") +
+  scale_x_continuous(breaks = 0:23, limits = c(0, 23)) +  
+  theme_bw()
+
+# Plot for Airfield SAF
+plot_saf <- ggplot(hourly_counts[hourly_counts$Airfield == "SAF", ], aes(x = HourS2, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "#f3a787") +
+  geom_text(aes(label = max_value), vjust = -0.5, color = "black", size = 3) +
+  labs(x = "Hour", y = "Frequency", title = "Frequency of S2 per Hour (Airfield SAF)") +
+  scale_x_continuous(breaks = 0:23, limits = c(0, 23)) +
+  theme_bw()
+
+print(plot_auc)
+print(plot_saf)
+```
+
+```{r}
+filtered_data <- dataset %>%
+  filter(Airfield %in% c("AUC", "SAF"))
+
+max_values <- filtered_data %>%
+  group_by(Airfield, Hour) %>%
+  summarise(Frequency = sum(!is.na(Hour)),
+            max_value = max(Frequency, na.rm = TRUE))
+
+plot_auc <- ggplot(max_values[max_values$Airfield == "AUC", ], aes(x = Hour, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "#ab58a8") +
+  geom_text(aes(label = max_value), vjust = -0.5, color = "black", size = 3) +
+  labs(x = "Hour", y = "Frequency", title = "Hourly Departures Frequency (Airfield AUC)") +
+  theme_bw() +
+  scale_x_continuous(breaks = 0:23)
+
+plot_saf <- ggplot(max_values[max_values$Airfield == "SAF", ], aes(x = Hour, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "#f3a787") +
+  geom_text(aes(label = max_value), vjust = -0.5, color = "black", size = 3) +
+  labs(x = "Hour", y = "Frequency", title = "Hourly Departures Frequency (Airfield SAF)") +
+  theme_bw() +
+  scale_x_continuous(breaks = 0:23)
+
+print(plot_auc)
+print(plot_saf)
+```
+
+```{r}
+filtered_data <- dataset %>%
+  filter(Airfield %in% c("SAF", "AUC"))
+
+max_values <- filtered_data %>%
+  group_by(Airfield, Day_of_Week) %>%
+  summarise(Frequency = sum(!is.na(Wait_Time) | !is.na(mean)),
+            max_value = max(Frequency, na.rm = TRUE))
+
+plot_saf <- ggplot(max_values[max_values$Airfield == "SAF", ], aes(x = Day_of_Week, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "#5fa1e7") +
+  geom_text(aes(label = max_value), vjust = -0.5, color = "black", size = 3) +
+  labs(x = "Day of Week", y = "Frequency", title = "Day of Week Distribution (Airfield SAF)") +
+  theme_bw()
+
+plot_auc <- ggplot(max_values[max_values$Airfield == "AUC", ], aes(x = Day_of_Week, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "#4ab9a3") +
+  geom_text(aes(label = max_value), vjust = -0.5, color = "black", size = 3) +
+  labs(x = "Day of Week", y = "Frequency", title = "Day of Week Distribution (Airfield AUC)") +
+  theme_bw()
+
+print(plot_saf)
+print(plot_auc)
+```
+
+
+```{r}
+airfield_counts <- table(dataset$Airfield)
+
+airfield_counts_df <- data.frame(
+  Category = names(airfield_counts),
+  Frequency = as.numeric(airfield_counts)
+)
+
+airfield_counts_df <- airfield_counts_df[order(-airfield_counts_df$Frequency), ]
+
+ggplot(airfield_counts_df, aes(x = Category, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "#73777b") +
+  labs(x = "Airfield", y = "Frequency", title = "Airfield Distribution") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 14, face = "bold")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_text(aes(label = Frequency), vjust = -0.5, color = "black", size = 3)
+
+city_counts <- table(dataset$BFO_Dest_City)
+
+city_counts_df <- data.frame(
+  Category = names(city_counts),
+  Frequency = as.numeric(city_counts)
+)
+
+city_counts_df <- city_counts_df[order(-city_counts_df$Frequency), ]
+
+ggplot(city_counts_df, aes(x = Category, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "#b2b2b2") +
+  labs(x = "BFO_Dest_City", y = "Frequency", title = "BFO_Dest_City Distribution") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 14, face = "bold")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_text(aes(label = Frequency), vjust = -0.5, color = "black", size = 3)
+
+country_counts <- table(dataset$BFO_Destination_Country_Code)
+
+country_counts_df <- data.frame(
+  Category = names(country_counts),
+  Frequency = as.numeric(country_counts)
+)
+
+country_counts_df <- country_counts_df[order(-country_counts_df$Frequency), ]
+
+ggplot(country_counts_df, aes(x = Category, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "#5fa1e7") +
+  labs(x = "BFO_Destination_Country_Code", y = "Frequency", title = "BFO_Destination_Country_Code Distribution") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 14, face = "bold")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_text(aes(label = Frequency), vjust = -0.5, color = "black", size = 3)
+
+```
+
+```{r}
+create_barplot <- function(variable) {
+  #frequency of each category
+  variable_counts <- table(dataset[[variable]])
+  
+  variable_counts_df <- data.frame(Category = names(variable_counts), Frequency = as.numeric(variable_counts))
+  
+
+  variable_counts_df <- variable_counts_df[order(-variable_counts_df$Frequency), ]
+  
+  ggplot(variable_counts_df, aes(x = Category, y = Frequency)) +
+    geom_bar(stat = "identity", fill = "#f36868") +
+    labs(x = variable, y = "Frequency", title = paste(variable, "Distribution")) +
+    theme_bw() +
+    theme(plot.title = element_text(size = 14, face = "bold")) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    geom_text(aes(label = Frequency), vjust = -0.5, color = "black", size = 3)
+}
+
+plot_wait_time <- create_barplot("Wait_Time")
+plot_c_start <- create_barplot("C_Start")
+plot_c0 <- create_barplot("C0")
+plot_c_avg <- create_barplot("C_avg")
+
+plot_wait_time
+plot_c_start
+plot_c0
+plot_c_avg
+
+```
+
+```{r}
+selected_variables <- c("Season", "Month", "Time_of_Day", "Period_of_Week", "S2", "Airfield")
+
+dataset[selected_variables] <- lapply(dataset[selected_variables], function(x) ifelse(is.na(x) | x == "", "Unknown", x))
+
+plots <- lapply(selected_variables, function(variable) {
+  variable_counts <- table(dataset[[variable]])
+  variable_counts_df <- data.frame(Category = names(variable_counts), Frequency = as.numeric(variable_counts))
+  variable_counts_df <- variable_counts_df[order(-variable_counts_df$Frequency), ]
+  ggplot(variable_counts_df, aes(x = Category, y = Frequency)) +
+    geom_bar(stat = "identity", fill = "#ab58a8") +
+    labs(x = variable, y = "Frequency", title = paste(variable, "Distribution")) +
+    theme_bw() +
+    theme(plot.title = element_text(size = 14, face = "bold")) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    geom_text(aes(label = Frequency), vjust = -0.5, color = "black", size = 3)
+})
+
+
+plots[[3]]  
+plots[[4]] 
+```
+
+```{r}
+library(lubridate)
+library(ggplot2)
+
+#time of day and day of the week from S2
+dataset$Time_of_Day <- hour(hm(dataset$S2))
+dataset$Day_of_Week <- wday(dataset$S2, label = TRUE)
+
+ggplot(dataset, aes(x = Time_of_Day)) +
+  geom_histogram(fill = "#4ab9a3", color = "white", bins = 24) +
+  labs(x = "Time of Day", y = "Frequency", title = "Peak Values of S2 by Time of Day") +
+  theme_bw()
+
+ggplot(dataset, aes(x = Day_of_Week)) +
+  geom_bar(fill = "#4ab9a3", color = "white") +
+  labs(x = "Day of Week", y = "Frequency", title = "Peak Values of S2 by Day of Week") +
+  theme_bw()
+
+```
+
+```{r}
+
+departure_plot <- plot_ly(dataset, x = ~Sch_Departure, y = ~Act_Departure, mode = "markers") %>%
+  layout(xaxis = list(title = "Scheduled Departure"),
+         yaxis = list(title = "Actual Departure"),
+         title = "Scatter Plot of Scheduled vs. Actual Departure")
+
+bar_plots <- list(
+  ggplot(dataset, aes(x = Time_of_Day)) +
+    geom_bar(fill = "#fdfe89")  +
+    labs(x = "Time of Day", y = "Frequency", title = "Time of Day Distribution") +
+    theme_bw(),
+  
+  ggplot(dataset, aes(x = Period_of_Week)) +
+  geom_bar(fill = "#4ab9a3") +
+  labs(x = "Period of Week", y = "Frequency", title = "Period of Week Distribution") +
+  theme_bw(),
+  
+  ggplot(dataset, aes(x = Day_of_Week)) +
+    geom_bar(fill = "#4ab9a3") +
+    labs(x = "Day of Week", y = "Frequency", title = "Day of Week Distribution") +
+    theme_bw(),
+  ggplot(dataset, aes(x = Month)) +
+    geom_bar(fill = '#F3A787') +
+    labs(x = "Month", y = "Frequency", title = "Month Distribution") +
+    theme_bw(),
+  ggplot(dataset, aes(x = Season)) +
+    geom_bar(fill = "steelblue") +
+    labs(x = "Season", y = "Frequency", title = "Season Distribution") +
+    theme_bw(),
+  ggplot(dataset, aes(x = Year)) +
+    geom_bar(fill = "#f3a787") +
+    labs(x = "Year", y = "Frequency", title = "Year Distribution") +
+    theme_bw()
+)
+
+departure_plot
+bar_plots[[3]]
+```
+
+```{r}
+df <- read.csv("BASA_AUC_2028_912.csv")
+df$Departure_Date <- ymd(df$Departure_Date)
+df$Departure_Time <- hms(df$Departure_Time)
+df$Day <- day(df$Departure_Date)
+df$Hour <- hour(df$Departure_Time)
+df$Minute <- minute(df$Departure_Time)
+df$BFO_Dest_City <- replace(df$BFO_Dest_City, is.na(df$BFO_Dest_City) | df$BFO_Dest_City == "" , "Unknown")
+df$BFO_Destination_Country_Code <- replace(df$BFO_Destination_Country_Code, df$BFO_Destination_Country_Code == "" | is.na(df$BFO_Destination_Country_Code), "Unknown")
+```
+
+```{r}
+airfield_counts <- table(df$Airfield)
+
+airfield_counts_df <- data.frame(
+  Category = names(airfield_counts),
+  Frequency = as.numeric(airfield_counts)
+)
+
+airfield_counts_df <- airfield_counts_df[order(-airfield_counts_df$Frequency), ]
+
+ggplot(airfield_counts_df, aes(x = Category, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(x = "Airfield", y = "Frequency", title = "Airfield Distribution") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 14, face = "bold")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_text(aes(label = Frequency), vjust = -0.5, color = "black", size = 3)
+
+city_counts <- table(df$BFO_Dest_City)
+
+city_counts_df <- data.frame(
+  Category = names(city_counts),
+  Frequency = as.numeric(city_counts)
+)
+
+city_counts_df <- city_counts_df[order(-city_counts_df$Frequency), ]
+
+ggplot(city_counts_df, aes(x = Category, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "BFO_Dest_City", y = "Frequency", title = "BFO_Dest_City Distribution") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 14, face = "bold")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_text(aes(label = Frequency), vjust = -0.5, color = "black", size = 3)
+
+country_counts <- table(df$BFO_Destination_Country_Code)
+
+country_counts_df <- data.frame(
+  Category = names(country_counts),
+  Frequency = as.numeric(country_counts)
+)
+country_counts_df <- country_counts_df[order(-country_counts_df$Frequency), ]
+
+ggplot(country_counts_df, aes(x = Category, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "BFO_Destination_Country_Code", y = "Frequency", title = "BFO_Destination_Country_Code Distribution") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 14, face = "bold")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_text(aes(label = Frequency), vjust = -0.5, color = "black", size = 3)
+```
+
+```{r}
+create_barplot <- function(variable) {
+
+  variable_counts <- table(df[[variable]])
+  
+  variable_counts_df <- data.frame(Category = names(variable_counts), Frequency = as.numeric(variable_counts))
+ 
+  variable_counts_df <- variable_counts_df[order(-variable_counts_df$Frequency), ]
+  
+  ggplot(variable_counts_df, aes(x = Category, y = Frequency)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(x = variable, y = "Frequency", title = paste(variable, "Distribution")) +
+    theme_bw() +
+    theme(plot.title = element_text(size = 14, face = "bold")) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    geom_text(aes(label = Frequency), vjust = -0.5, color = "black", size = 3)
+}
+
+plot_wait_time <- create_barplot("Wait_Time")
+plot_c_start <- create_barplot("C_Start")
+plot_c0 <- create_barplot("C0")
+plot_c_avg <- create_barplot("C_avg")
+
+plot_wait_time
+plot_c_start
+plot_c0
+plot_c_avg
+
+```
+
+```{r}
+d1 <- read.csv("years&BASAmerged.csv")
+d1$Departure_Date <- ymd(d1$Departure_Date)
+d1$Departure_Time <- hms(d1$Departure_Time)
+d1$Day <- day(d1$Departure_Date)
+d1$Hour <- hour(d1$Departure_Time)
+d1$Minute <- minute(d1$Departure_Time)
+d1$BFO_Dest_City <- replace(d1$BFO_Dest_City, is.na(d1$BFO_Dest_City) | d1$BFO_Dest_City == "" , "Unknown")
+d1$BFO_Destination_Country_Code <- replace(d1$BFO_Destination_Country_Code, d1$BFO_Destination_Country_Code == "" | is.na(d1$BFO_Destination_Country_Code), "Unknown")
+```
+
