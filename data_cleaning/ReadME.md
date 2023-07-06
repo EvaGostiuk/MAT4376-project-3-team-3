@@ -1,1 +1,1 @@
-In order to visualize the data better, we combined all the datasets into one large dataset, which contained information on all of the airfields as well as all of the Auckland airfield information combined into one. 
+In order to visualize the data better, we combined all the datasets into one large dataset using the Flight ID, which contained information on all of the airfields as well as all of the Auckland airfield information combined into one.
