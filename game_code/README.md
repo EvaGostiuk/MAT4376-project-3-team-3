@@ -1,1 +1,1 @@
-Files found in this section were used to aid the creation of our game. You will find all of the JSON files used for the "papers" collected for each level (airfield).
+Files found in this section were used to aid the creation of our game. You will find all of the JSON files used for the "papers" collected for each level (airfield). Contents for each of the papers can be found [here](https://github.com/EvaGostiuk/MAT4376-project-3-team-3/blob/master/Tasks_1_2/README.md).
