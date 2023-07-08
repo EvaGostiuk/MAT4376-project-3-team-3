@@ -1,0 +1,258 @@
+---
+title: "proj3Q"
+output: html_document
+date: "2023-07-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(lubridate)
+library(corrplot)
+library(plotly)
+library(scatterplot3d)
+library(ggplot2)
+library(dplyr)
+library(queueing)
+library(stringr)
+```
+
+```{r}
+dataset <- read.csv("all_data_merged.csv")
+
+dataset <- dataset %>%
+  mutate(Act_Departure = as.POSIXct(Act_Departure, origin = "1970-01-01"))
+
+dataset <- dataset %>%
+  mutate(Act_Departure_Date = as_date(Act_Departure),
+         Act_Departure_Time = format(Act_Departure, format = "%H:%M:%S"))
+
+dataset$Day <- day(dataset$Act_Departure)
+dataset$Hour <- hour(dataset$Act_Departure)
+dataset$Minute <- minute(dataset$Act_Departure)
+
+
+dataset$S2 <- as.POSIXct(dataset$S2)
+
+dataset$Wait_Time <- as.numeric(dataset$Wait_Time)
+
+dataset$S1 <- dataset$S2 - (dataset$Wait_Time * 60) 
+
+# Subset SAF Data
+saf_data <- subset(dataset, Airfield == "SAF", select = c("S2", "S1", "Wait_Time", "C_Start", "C0", "C_avg"))
+saf_data <- saf_data[complete.cases(saf_data), ]
+
+# Subset AUC Data
+auc_data <- subset(dataset, Airfield == "AUC", select = c("S2", "S1", "Wait_Time", "C_Start", "C0", "C_avg"))
+auc_data <- auc_data[complete.cases(auc_data), ]
+```
+
+```{r}
+# Convert S2 to POSIXct if not already in the correct format
+auc_data$S2 <- as.POSIXct(auc_data$S2)
+saf_data$S2 <- as.POSIXct(saf_data$S2)
+
+# Calculate the time duration in minutes
+time_duration_auc <- as.numeric(difftime(max(auc_data$S2), min(auc_data$S2), units = "mins"))
+time_duration_saf <- as.numeric(difftime(max(saf_data$S2), min(saf_data$S2), units = "mins"))
+
+# Calculate the average number of arrivals per minute (λ)
+lambda_auc <- nrow(auc_data) / time_duration_auc
+lambda_saf <- nrow(saf_data) / time_duration_saf
+
+# Calculate the average service rate (µ) based on the average wait time (Wait_Time)
+mu_auc <- 1 / mean(auc_data$Wait_Time)
+mu_saf <- 1 / mean(saf_data$Wait_Time)
+
+# Number of servers (c) based on the M/M/c model assumption
+c_auc <- 2  # Assuming 2 server for auc_data
+c_saf <- 2 # Assuming 2 servers for saf_data
+
+# Create the queueing model
+model_auc <- NewInput.MMC(lambda = lambda_auc, mu = mu_auc, c = c_auc,  n = 0)
+model_saf <- NewInput.MMC(lambda = lambda_saf, mu = mu_saf, c = c_saf, n = 0)
+
+outAUC <- QueueingModel(model_auc)
+Report(outAUC)
+summary(outAUC)
+
+outSAF <- QueueingModel(model_saf)
+Report(outSAF)
+summary(outSAF)
+```
+
+```{r}
+curve(dpois(x, model_saf$lambda),
+      from = 0, 
+      to = 20, 
+      type = "b", 
+      lwd = 2,
+      xlab = "Number of customers",
+      ylab = "Probability",
+      main = "SAF Poisson Distribution for Arrival Process",
+      ylim = c(0, 0.90),
+      n = 21)
+
+curve(dpois(x, model_auc$lambda),
+      from = 0, 
+      to = 20, 
+      type = "b", 
+      lwd = 2,
+      xlab = "Number of customers",
+      ylab = "Probability",
+      main = "AUC Poisson Distribution for Arrival Process",
+      ylim = c(0, 0.90),
+      n = 21)
+
+curve(dexp(x, rate = 1/model_saf$lambda),
+      from = 0, 
+      to = 10,
+      type = "l", 
+      lwd = 2,
+      xlab = "Interarrival Time",
+      ylab = "Probaility",
+      main = "SAF Exponential Distribution for Interarrival Time",
+      ylim = c(0, 1))
+abline(h = 0)
+
+curve(dexp(x, rate = 1/model_auc$lambda),
+      from = 0, 
+      to = 10,
+      type = "l", 
+      lwd = 2,
+      xlab = "Interarrival Time",
+      ylab = "Probaility",
+      main = "AUC Exponential Distribution for Interarrival Time",
+      ylim = c(0, 1))
+abline(h = 0)
+
+curve(dexp(x, rate = model_saf$mu),
+      from = 0, 
+      to = 15, 
+      type = "l", 
+      lwd = 2,
+      xlab = "Service Waiting Time",
+      ylab = "Probaility",
+      main = "SAF Exponential Distribution for Service Process",
+      ylim = c(0, 1))
+abline(h = 0)
+
+curve(dexp(x, rate = model_auc$mu),
+      from = 0, 
+      to = 15, 
+      type = "l", 
+      lwd = 2,
+      xlab = "Service Waiting Time",
+      ylab = "Probaility",
+      main = "AUC Exponential Distribution for Service Process",
+      ylim = c(0, 1))
+abline(h = 0)
+```
+
+```{r}
+# Convert S2 to POSIXct if not already in the correct format
+auc_data$S2 <- as.POSIXct(auc_data$S2)
+saf_data$S2 <- as.POSIXct(saf_data$S2)
+
+# Calculate the time duration in minutes
+time_duration_auc <- as.numeric(difftime(max(auc_data$S2), min(auc_data$S2), units = "mins"))
+time_duration_saf <- as.numeric(difftime(max(saf_data$S2), min(saf_data$S2), units = "mins"))
+
+# Calculate the average number of arrivals per minute (λ)
+lambda_auc <- nrow(auc_data) / time_duration_auc
+lambda_saf <- nrow(saf_data) / time_duration_saf
+
+# Calculate the average service rate (µ) based on the average wait time (Wait_Time)
+mu_auc <- 1 / mean(auc_data$Wait_Time)
+mu_saf <- 1 / mean(saf_data$Wait_Time)
+
+# Number of servers (c) based on the M/M/c model assumption
+c_auc <- 3  # Assuming 2 server for auc_data
+c_saf <- 3 # Assuming 2 servers for saf_data
+
+# Create the queueing model
+model_auc <- NewInput.MMC(lambda = lambda_auc, mu = mu_auc, c = c_auc,  n = 0)
+model_saf <- NewInput.MMC(lambda = lambda_saf, mu = mu_saf, c = c_saf, n = 0)
+
+outAUC <- QueueingModel(model_auc)
+Report(outAUC)
+summary(outAUC)
+
+outSAF <- QueueingModel(model_saf)
+Report(outSAF)
+summary(outSAF)
+```
+
+```{r}
+curve(dpois(x, model_saf$lambda),
+      from = 0, 
+      to = 20, 
+      type = "b", 
+      lwd = 2,
+      xlab = "Number of customers",
+      ylab = "Probability",
+      main = "SAF Poisson Distribution for Arrival Process",
+      ylim = c(0, 0.90),
+      n = 21)
+
+curve(dpois(x, model_auc$lambda),
+      from = 0, 
+      to = 20, 
+      type = "b", 
+      lwd = 2,
+      xlab = "Number of customers",
+      ylab = "Probability",
+      main = "AUC Poisson Distribution for Arrival Process",
+      ylim = c(0, 0.90),
+      n = 21)
+
+curve(dexp(x, rate = 1/model_saf$lambda),
+      from = 0, 
+      to = 10,
+      type = "l", 
+      lwd = 2,
+      xlab = "Interarrival Time",
+      ylab = "Probaility",
+      main = "SAF Exponential Distribution for Interarrival Time",
+      ylim = c(0, 1))
+abline(h = 0)
+
+curve(dexp(x, rate = 1/model_auc$lambda),
+      from = 0, 
+      to = 10,
+      type = "l", 
+      lwd = 2,
+      xlab = "Interarrival Time",
+      ylab = "Probaility",
+      main = "AUC Exponential Distribution for Interarrival Time",
+      ylim = c(0, 1))
+abline(h = 0)
+
+curve(dexp(x, rate = model_saf$mu),
+      from = 0, 
+      to = 15, 
+      type = "l", 
+      lwd = 2,
+      xlab = "Service Waiting Time",
+      ylab = "Probaility",
+      main = "SAF Exponential Distribution for Service Process",
+      ylim = c(0, 1))
+abline(h = 0)
+
+curve(dexp(x, rate = model_auc$mu),
+      from = 0, 
+      to = 15, 
+      type = "l", 
+      lwd = 2,
+      xlab = "Service Waiting Time",
+      ylab = "Probaility",
+      main = "AUC Exponential Distribution for Service Process",
+      ylim = c(0, 1))
+abline(h = 0)
+```
+
+
+

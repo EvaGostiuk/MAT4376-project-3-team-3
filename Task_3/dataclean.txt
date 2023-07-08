@@ -1,0 +1,7 @@
+Dataset cleaning for Queueing System using queueing package in R.
+- Eva merged all 4 datasets together to form all_data_merged.csv
+- S1 has been calculated by substracting Wait_Time from S2 (S2 - Wait_Time) and a new column S1 is produced for the all_dat_merged.csv
+- from all_data_merged.csv I produced 2 subsets: auc_data.csv and saf_data.csv
+- auc_data.csv & saf_data.csv contain S2, S1, Wait_Time, C_Start, C0 and C_avg (last 3 optional)
+- rows of auc_data.csv & saf_data.csv contains only rows with complete cases; if a row contains an NA cell it is omitted.
+The result of the above process produced thw 2 datasets used for the queueing system: auc_data.csv & saf_data.csv
