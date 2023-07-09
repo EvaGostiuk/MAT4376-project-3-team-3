@@ -4,7 +4,7 @@
 
 ## Links to Final Work
 
-[Game Link] (https://vivante.itch.io/flying-through-borealia-queueing-systems)
+[Game Link](https://vivante.itch.io/flying-through-borealia-queueing-systems)
 
 [Final PDF](https://docs.google.com/document/d/1NDnfiRG6j64BQKEROwSm7Z98MVTlKj03v_AD84ZN1XE/edit?usp=sharing) **change to PDF link once PDF is created (upload PDF in master)**
 
