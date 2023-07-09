@@ -6,7 +6,7 @@
 
 [Game Link](https://vivante.itch.io/flying-through-borealia-queueing-systems)<br />
 YOU are Jim. <br />
-Jim the airfield inspector, has been entrusted with the crucial mission of unraveling fascinating secrets at the four prominent airfields: Auckland (AUC), Saint-Francois (SAF), Chebucto (CWL), and Queenston (CWL). Will you be able to immerse yourself in the captivating visualizations and unlock the mysteries hidden within the comprehensive airfield report? Get ready to embark on this exhilarating quest and see if you have what it takes to conquer the challenges that lie ahead. Are you up for the journey?
+Jim the airfield inspector, has been entrusted with the crucial mission of unraveling fascinating secrets at the four prominent airfields: Auckland (AUC), Saint-Francois (SAF), Chebucto (CWL), and Queenston (QUE). Will you be able to immerse yourself in the captivating visualizations and unlock the mysteries hidden within the comprehensive airfield report? Get ready to embark on this exhilarating quest and see if you have what it takes to conquer the challenges that lie ahead. Are you up for the journey?
 
 
 
