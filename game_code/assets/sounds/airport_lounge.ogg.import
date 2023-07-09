@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/airport_lounge.ogg-00d2e76d8569f947a3f06f84a140160a.oggstr"
+
+[deps]
+
+source_file="res://assets/sounds/airport_lounge.ogg"
+dest_files=[ "res://.import/airport_lounge.ogg-00d2e76d8569f947a3f06f84a140160a.oggstr" ]
+
+[params]
+
+loop=true
+loop_offset=0

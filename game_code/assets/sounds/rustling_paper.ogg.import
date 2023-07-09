@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/rustling_paper.ogg-f0f2ab712d910b07c525802e5071dcd1.oggstr"
+
+[deps]
+
+source_file="res://assets/sounds/rustling_paper.ogg"
+dest_files=[ "res://.import/rustling_paper.ogg-f0f2ab712d910b07c525802e5071dcd1.oggstr" ]
+
+[params]
+
+loop=false
+loop_offset=0
