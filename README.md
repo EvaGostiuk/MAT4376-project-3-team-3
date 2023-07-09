@@ -10,7 +10,7 @@ Jim the airfield inspector, has been entrusted with the crucial mission of unrav
 
 
 
-[Final PDF](https://docs.google.com/document/d/1NDnfiRG6j64BQKEROwSm7Z98MVTlKj03v_AD84ZN1XE/edit?usp=sharing) **change to PDF link once PDF is created (upload PDF in master)** <br />
+[Final PDF](https://github.com/EvaGostiuk/MAT4376-project-3-team-3/blob/master/MAT4376_Project3_FinalReport.pdf?raw=true)  <br />
 This PDF serves as a reference page for the content in the game.
 
 [Data Dictionary](https://docs.google.com/spreadsheets/d/17IvA-PzzZUNexGkVtO7XhCBO8_0ab7jI1joA-3qYwgg/edit?usp=sharing)
