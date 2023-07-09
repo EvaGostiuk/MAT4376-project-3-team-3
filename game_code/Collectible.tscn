@@ -1,0 +1,65 @@
+[gd_scene load_steps=14 format=2]
+
+[ext_resource path="res://assets/sounds/rustling_paper.ogg" type="AudioStream" id=1]
+[ext_resource path="res://Collectible.gd" type="Script" id=2]
+[ext_resource path="res://assets/PapersPickupAnimation.png" type="Texture" id=3]
+
+[sub_resource type="CircleShape2D" id=1]
+radius = 30.0167
+
+[sub_resource type="AtlasTexture" id=11]
+atlas = ExtResource( 3 )
+region = Rect2( 0, 0, 16, 20 )
+
+[sub_resource type="AtlasTexture" id=12]
+atlas = ExtResource( 3 )
+region = Rect2( 16, 0, 16, 20 )
+
+[sub_resource type="AtlasTexture" id=13]
+atlas = ExtResource( 3 )
+region = Rect2( 32, 0, 16, 20 )
+
+[sub_resource type="AtlasTexture" id=14]
+atlas = ExtResource( 3 )
+region = Rect2( 48, 0, 16, 20 )
+
+[sub_resource type="AtlasTexture" id=15]
+atlas = ExtResource( 3 )
+region = Rect2( 64, 0, 16, 20 )
+
+[sub_resource type="AtlasTexture" id=16]
+atlas = ExtResource( 3 )
+region = Rect2( 80, 0, 16, 20 )
+
+[sub_resource type="AtlasTexture" id=17]
+atlas = ExtResource( 3 )
+region = Rect2( 96, 0, 16, 20 )
+
+[sub_resource type="AtlasTexture" id=18]
+atlas = ExtResource( 3 )
+region = Rect2( 112, 0, 16, 20 )
+
+[sub_resource type="SpriteFrames" id=19]
+animations = [ {
+"frames": [ SubResource( 11 ), SubResource( 12 ), SubResource( 13 ), SubResource( 14 ), SubResource( 15 ), SubResource( 16 ), SubResource( 17 ), SubResource( 18 ) ],
+"loop": true,
+"name": "default",
+"speed": 4.0
+} ]
+
+[node name="Collectible" type="Area2D" groups=["Collectibles"]]
+script = ExtResource( 2 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource( 1 )
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="."]
+scale = Vector2( 4, 4 )
+frames = SubResource( 19 )
+frame = 1
+playing = true
+
+[node name="Sound_paper" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 1 )
+
+[connection signal="body_entered" from="." to="." method="_on_Collectible_body_entered"]

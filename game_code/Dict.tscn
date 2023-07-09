@@ -1,0 +1,204 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://assets/overlayDict.png" type="Texture" id=1]
+[ext_resource path="res://assets/whiteB.png" type="Texture" id=2]
+[ext_resource path="res://assets/Fonts/new_theme2.tres" type="Theme" id=3]
+[ext_resource path="res://Dict.gd" type="Script" id=4]
+[ext_resource path="res://assets/Fonts/button_theme.tres" type="Theme" id=5]
+[ext_resource path="res://assets/Fonts/new_theme.tres" type="Theme" id=6]
+[ext_resource path="res://Butt_idon.gd" type="Script" id=7]
+
+[node name="Dict" type="Node2D"]
+script = ExtResource( 4 )
+
+[node name="WhiteB" type="Sprite" parent="."]
+position = Vector2( 640, 360 )
+texture = ExtResource( 2 )
+
+[node name="Sprite" type="Sprite" parent="."]
+position = Vector2( 640, 360 )
+texture = ExtResource( 1 )
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+margin_left = 37.0
+margin_top = 28.0
+margin_right = 316.0
+margin_bottom = 692.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+margin_right = 279.0
+margin_bottom = 641.0
+rect_min_size = Vector2( 279, 0 )
+
+[node name="Label3" type="Label" parent="ScrollContainer/VBoxContainer"]
+margin_right = 279.0
+margin_bottom = 29.0
+theme = ExtResource( 6 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "Task"
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer"]
+margin_top = 33.0
+margin_right = 279.0
+margin_bottom = 192.0
+theme = ExtResource( 3 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "You need to visit 4 airports where you will compile a report about queueing system for each airfield. After all airports are visited, you need to find a receptionist with red hair to get the comparison of different airfields."
+align = 3
+autowrap = true
+
+[node name="Label4" type="Label" parent="ScrollContainer/VBoxContainer"]
+margin_top = 196.0
+margin_right = 279.0
+margin_bottom = 257.0
+theme = ExtResource( 6 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "
+Data Disctionary"
+
+[node name="Button" type="Button" parent="ScrollContainer/VBoxContainer"]
+margin_top = 261.0
+margin_right = 279.0
+margin_bottom = 290.0
+focus_mode = 0
+theme = ExtResource( 5 )
+enabled_focus_mode = 0
+text = "Flight Related"
+script = ExtResource( 7 )
+button_Title = "Flight Related"
+
+[node name="Button2" type="Button" parent="ScrollContainer/VBoxContainer"]
+margin_top = 294.0
+margin_right = 279.0
+margin_bottom = 323.0
+theme = ExtResource( 5 )
+text = "Passenger Related"
+script = ExtResource( 7 )
+button_id = 1
+button_Title = "Passenger Related"
+
+[node name="Button3" type="Button" parent="ScrollContainer/VBoxContainer"]
+margin_top = 327.0
+margin_right = 279.0
+margin_bottom = 356.0
+theme = ExtResource( 5 )
+text = "Geography Related"
+script = ExtResource( 7 )
+button_id = 2
+button_Title = "Geography Related"
+
+[node name="Button4" type="Button" parent="ScrollContainer/VBoxContainer"]
+margin_top = 360.0
+margin_right = 279.0
+margin_bottom = 389.0
+theme = ExtResource( 5 )
+text = "Queuing-System Related"
+script = ExtResource( 7 )
+button_id = 3
+button_Title = "Queuing-System Related"
+
+[node name="Label2" type="Label" parent="ScrollContainer/VBoxContainer"]
+margin_top = 393.0
+margin_right = 279.0
+margin_bottom = 454.0
+theme = ExtResource( 6 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "
+Airfield Fun Facts"
+
+[node name="Button5" type="Button" parent="ScrollContainer/VBoxContainer"]
+margin_top = 458.0
+margin_right = 279.0
+margin_bottom = 487.0
+theme = ExtResource( 5 )
+text = "Auckland(AUC)"
+script = ExtResource( 7 )
+button_id = 4
+button_Title = "Auckland(AUC)"
+
+[node name="Button6" type="Button" parent="ScrollContainer/VBoxContainer"]
+margin_top = 491.0
+margin_right = 279.0
+margin_bottom = 520.0
+theme = ExtResource( 5 )
+text = "Saint-Francois(SAF)"
+script = ExtResource( 7 )
+button_id = 5
+button_Title = "Saint-Francois(SAF)"
+
+[node name="Button7" type="Button" parent="ScrollContainer/VBoxContainer"]
+margin_top = 524.0
+margin_right = 279.0
+margin_bottom = 553.0
+theme = ExtResource( 5 )
+text = "Chebucto(CWL)"
+script = ExtResource( 7 )
+button_id = 6
+button_Title = "Chebucto(CWL)"
+
+[node name="Button8" type="Button" parent="ScrollContainer/VBoxContainer"]
+margin_top = 557.0
+margin_right = 279.0
+margin_bottom = 586.0
+theme = ExtResource( 5 )
+text = "Queenston(QUE)"
+script = ExtResource( 7 )
+button_id = 7
+button_Title = "Queenston(QUE)"
+
+[node name="Label5" type="Label" parent="ScrollContainer/VBoxContainer"]
+margin_top = 590.0
+margin_right = 279.0
+margin_bottom = 641.0
+theme = ExtResource( 3 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "
+(Press Q to exit dictionary)"
+align = 1
+autowrap = true
+
+[node name="ScrollContainer2" type="ScrollContainer" parent="."]
+margin_left = 372.0
+margin_top = 24.0
+margin_right = 1244.0
+margin_bottom = 696.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer2"]
+margin_right = 875.0
+margin_bottom = 381.0
+rect_min_size = Vector2( 875, 0 )
+
+[node name="Title" type="Label" parent="ScrollContainer2/VBoxContainer"]
+margin_right = 875.0
+margin_bottom = 29.0
+theme = ExtResource( 6 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+
+[node name="Contents" type="Label" parent="ScrollContainer2/VBoxContainer"]
+margin_top = 33.0
+margin_right = 875.0
+margin_bottom = 381.0
+theme = ExtResource( 3 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "Summary: There were four airfields included in the datasets given to us: Auckland, Saint-Francois, Chebucto, and Queenston. The latter two had no information on wait time for any of the entries so they were excluded from the prediction of wait times using queueing theory. The first two airfields included information on the wait times, thus we conducted our queueing model analysis solely on these two airfields (individually). We have included “fun facts” and visualizations on all four airfields from the data that was provided to us, which includes information on destination countries and cities, frequency of departures by hour and day, and much more.
+
+For the Queuing System:
+The use of an M/M/C for creating a queuing system was chosen due to the assumption that there would be more than 1 server at both airports. Using an M/M/C helped consider multiple numbers of servers in each airfield. For this section, I chose to look at both 2 servers and 3 servers to analyze its effects of different server wait times. We also assume that rho < 1 (where rho = lambda / (mu)(c) for an M/M/C model) which indicates a steady state does exist, and the queue will eventually come to an end."
+autowrap = true
+
+[connection signal="button_down" from="ScrollContainer/VBoxContainer/Button" to="ScrollContainer/VBoxContainer/Button" method="updateContents_flag"]
+[connection signal="updateContents" from="ScrollContainer/VBoxContainer/Button" to="." method="updateContentsLabel"]
+[connection signal="button_down" from="ScrollContainer/VBoxContainer/Button2" to="ScrollContainer/VBoxContainer/Button2" method="updateContents_flag"]
+[connection signal="updateContents" from="ScrollContainer/VBoxContainer/Button2" to="." method="updateContentsLabel"]
+[connection signal="button_down" from="ScrollContainer/VBoxContainer/Button3" to="ScrollContainer/VBoxContainer/Button3" method="updateContents_flag"]
+[connection signal="updateContents" from="ScrollContainer/VBoxContainer/Button3" to="." method="updateContentsLabel"]
+[connection signal="button_down" from="ScrollContainer/VBoxContainer/Button4" to="ScrollContainer/VBoxContainer/Button4" method="updateContents_flag"]
+[connection signal="updateContents" from="ScrollContainer/VBoxContainer/Button4" to="." method="updateContentsLabel"]
+[connection signal="button_down" from="ScrollContainer/VBoxContainer/Button5" to="ScrollContainer/VBoxContainer/Button5" method="updateContents_flag"]
+[connection signal="updateContents" from="ScrollContainer/VBoxContainer/Button5" to="." method="updateContentsLabel"]
+[connection signal="button_down" from="ScrollContainer/VBoxContainer/Button6" to="ScrollContainer/VBoxContainer/Button6" method="updateContents_flag"]
+[connection signal="updateContents" from="ScrollContainer/VBoxContainer/Button6" to="." method="updateContentsLabel"]
+[connection signal="button_down" from="ScrollContainer/VBoxContainer/Button7" to="ScrollContainer/VBoxContainer/Button7" method="updateContents_flag"]
+[connection signal="updateContents" from="ScrollContainer/VBoxContainer/Button7" to="." method="updateContentsLabel"]
+[connection signal="button_down" from="ScrollContainer/VBoxContainer/Button8" to="ScrollContainer/VBoxContainer/Button8" method="updateContents_flag"]
+[connection signal="updateContents" from="ScrollContainer/VBoxContainer/Button8" to="." method="updateContentsLabel"]
